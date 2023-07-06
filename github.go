@@ -104,7 +104,7 @@ var ErrNoAssets = errors.New("there are no assets for this repo")
 var ErrCheckPkg = errors.New("error checking distro package manager")
 var ErrNoRepoUrl = errors.New("no repo url found")
 
-func Github(repo string) (string, error) {
+func Github(repo string, match string) (string, error) {
 	if !strings.Contains(repo, "/") {
 		return "", ErrImproperRepo
 	}
@@ -135,15 +135,21 @@ func Github(repo string) (string, error) {
 		return "", ErrNoAssets
 	}
 
-	var pkgName string
-	if runtime.GOOS == "linux" {
-		pkgName, err = CheckPkg()
-		if err != nil {
-			return "", ErrCheckPkg
+	var searchStr string
+	if match == "" {
+		var pkgName string
+		if runtime.GOOS == "linux" {
+			pkgName, err = CheckPkg()
+			if err != nil {
+				return "", ErrCheckPkg
+			}
 		}
+		archName := runtime.GOARCH
+		searchStr = fmt.Sprintf("%s.%s", archName, pkgName)
+	} else {
+		searchStr = match
 	}
-	archName := runtime.GOARCH
-	searchStr := fmt.Sprintf("%s.%s", archName, pkgName)
+
 	var repoUrl string
 	for _, v := range assets {
 		if strings.Contains(v.BrowserDownloadURL, searchStr) {
